@@ -26,6 +26,9 @@ test "testing simple sum" {
     defer allocator.free(input);
 
     const output = try aoc1.run(allocator, input);
+    const output2 = try aoc1.run2(allocator, input);
 
     try expectEqual(@as(u32, 3569916), output);
+    std.debug.print("===>{d}", .{output2});
+    try expectEqual(@as(u32, 26407426), output2);
 }
