@@ -40,7 +40,11 @@ test "aoc day 2" {
     const input = try readFileToBuffer(allocator, "inputs/2.txt");
     defer allocator.free(input);
 
-    const output = try aoc.day2run(allocator, input);
+    const output = try aoc.day2run(allocator, input, 0);
+    const output2 = try aoc.day2run(allocator, input, 1);
+
+    std.log.warn("{any}", .{output2});
 
     try expectEqual(@as(u32, 559), output);
+    try expectEqual(@as(u32, 601), output2);
 }

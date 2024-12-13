@@ -80,7 +80,7 @@ pub fn run2(allocator: Allocator, input: []u8) !u32 {
     return similaritySum;
 }
 
-pub fn day2run(allocator: Allocator, input: []u8) !u32 {
+pub fn day2run(allocator: Allocator, input: []u8, tollerance: usize) !u32 {
     var reports = ArrayList(ArrayList(u32)).init(allocator);
     defer reports.deinit();
     var lines = std.mem.splitSequence(u8, input, "\n");
@@ -102,7 +102,7 @@ pub fn day2run(allocator: Allocator, input: []u8) !u32 {
 
     var safeReportNum: u32 = 0;
     for (reports.items) |report| {
-        const isSafe = isSafeReport(report.items);
+        const isSafe = isSafeReport(report.items, tollerance);
         if (isSafe) {
             safeReportNum += 1;
         }
@@ -112,19 +112,28 @@ pub fn day2run(allocator: Allocator, input: []u8) !u32 {
     return safeReportNum;
 }
 
-fn isSafeReport(report: []u32) bool {
+fn isSafeReport(report: []u32, tollerance: usize) bool {
+    var times: usize = 0;
     var previousOperationType: ?bool = null;
 
     for (0..(report.len - 1)) |i| {
         const current: i33 = @intCast(report[i]);
         const next: i33 = @intCast(report[i + 1]);
         const operationDifference: i33 = current - next;
-        if (operationDifference < -3 or operationDifference > 3 or operationDifference == 0) {
-            return false;
-        }
         const currentOperationType = operationDifference > 0;
+        if (operationDifference < -3 or operationDifference > 3 or operationDifference == 0) {
+            if (times == tollerance) {
+                return false;
+            }
+            times += 1;
+            previousOperationType = currentOperationType;
+            continue;
+        }
         if (previousOperationType != null and (previousOperationType != currentOperationType)) {
-            return false;
+            if (times == tollerance) {
+                return false;
+            }
+            times += 1;
         }
         previousOperationType = currentOperationType;
     }
@@ -134,15 +143,32 @@ fn isSafeReport(report: []u32) bool {
 test "is report safe" {
     var input = [_]u32{ 1, 2, 3, 4 };
     var castedInput: []u32 = &input;
-    try expect(isSafeReport(castedInput));
+    try expect(isSafeReport(castedInput, 0));
     input = [_]u32{ 1, 2, 4, 7 };
-    try expect(isSafeReport(castedInput));
+    try expect(isSafeReport(castedInput, 0));
     input = [_]u32{ 7, 6, 4, 1 };
-    try expect(isSafeReport(castedInput));
+    try expect(isSafeReport(castedInput, 0));
     input = [_]u32{ 1, 5, 6, 7 };
-    try expect(!isSafeReport(castedInput));
+    try expect(!isSafeReport(castedInput, 0));
     input = [_]u32{ 1, 1, 1, 1 };
-    try expect(!isSafeReport(castedInput));
+    try expect(!isSafeReport(castedInput, 0));
     input = [_]u32{ 15, 10, 5, 0 };
-    try expect(!isSafeReport(castedInput));
+    try expect(!isSafeReport(castedInput, 0));
+}
+
+test "is report safe aslo with one layer unregular" {
+    var input = [_]u32{ 5, 1, 2, 3, 4 };
+    var castedInput: []u32 = &input;
+    try expect(isSafeReport(castedInput, 1));
+    input = [_]u32{ 5, 1, 2, 4, 7 };
+    try expect(isSafeReport(castedInput, 1));
+    input = [_]u32{ 1, 7, 6, 4, 1 };
+    try expect(isSafeReport(castedInput, 1));
+
+    input = [_]u32{ 5, 1, 5, 6, 7 };
+    try expect(!isSafeReport(castedInput, 1));
+    input = [_]u32{ 1, 1, 1, 1, 1 };
+    try expect(!isSafeReport(castedInput, 1));
+    input = [_]u32{ 20, 15, 10, 5, 0 };
+    try expect(!isSafeReport(castedInput, 1));
 }
